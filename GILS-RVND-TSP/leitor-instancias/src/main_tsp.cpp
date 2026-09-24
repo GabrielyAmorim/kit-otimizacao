@@ -75,7 +75,6 @@ solution construcao(Data& data){
         // Selecionar aleatoriamente entre os melhores para não viciar o algoritmo
         double alpha = (double)rand() / RAND_MAX; // num entre 0 e 1
         int maxSelecionado = (int)ceil(alpha * custoInsercao.size());
-        if(maxSelecionado == 0) maxSelecionado = 1;
         int selecionado = rand() % maxSelecionado;
 
         // Quem foi selecionado
@@ -88,7 +87,7 @@ solution construcao(Data& data){
     }
 
     s.cost = 0.0;
-    for(int i = 0; i < (int)s.sequence.size() - 1; i++){
+    for(int i = 0; i < s.sequence.size() - 1; i++){
         s.cost += data.getDistance(s.sequence[i], s.sequence[i + 1]); 
     }
 
@@ -97,7 +96,7 @@ solution construcao(Data& data){
 
 // RELACIONADO A BUSCALOCAL()
 
-// Troca a posição de duas arestas na rota
+// Troca a posição de duas cidades na rota
 bool bestImprovementSwap(solution& s, Data& data){
     double bestDelta = 0.0;
     int best_i = 0, best_j = 0;

@@ -25,9 +25,13 @@ OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRCS))
 #############################
 
 #### regra principal, gera o executavel
-tsp: $(OBJS) 
-	@echo  "\033[31m \nLinking all objects files: \033[0m"
-	$(CPPC) $(BITS_OPTION) $(OBJS) -o $@ $(CCLNFLAGS)
+tsp: $(filter-out $(OBJDIR)/main_mlp.o,$(OBJS))
+	@echo "\033[31m \nLinking TSP: \033[0m"
+	$(CPPC) $(BITS_OPTION) $^ -o $@ $(CCLNFLAGS)
+
+mlp: $(filter-out $(OBJDIR)/main_tsp.o,$(OBJS))
+	@echo "\033[31m \nLinking MLP: \033[0m"
+	$(CPPC) $(BITS_OPTION) $^ -o $@ $(CCLNFLAGS)	
 ############################
 
 #inclui os arquivos de dependencias

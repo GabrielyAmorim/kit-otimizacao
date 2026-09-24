@@ -1,4 +1,7 @@
 obj
 tsp
-logslogs/
+mlp
+logs_tsp/
+logs_mlp/
 *.log
+.vscode/
