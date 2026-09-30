@@ -13,11 +13,6 @@ struct solution{
     double cost = 0.0;
 };
 
-struct subsequence{
-    double T, C;
-    int W, first, last; 
-};
-
 solution construcao(Data& data, double alpha){
     solution s;
     vector<int> CL;
@@ -71,6 +66,24 @@ solution construcao(Data& data, double alpha){
     s.sequence.push_back(1);
     return s;
 }
+
+struct subsequence{
+    double T, C;
+    int W, first, last; 
+    inline static subsequence concatenate(Data &data, subsequence &sigma_1, subsequence &sigma_2){
+        subsequence sigma;
+        double temp = data.getDistance(sigma_1.last, sigma_2.first);
+        sigma.T = sigma_1.T + temp + sigma_2.T;
+        sigma.W = sigma_1.W + sigma_2.W;
+        sigma.C = sigma_1.C + sigma_2.W * (sigma_1.T + temp) + sigma_2.C;
+        sigma.first = sigma_1.first;
+        sigma.last = sigma_2.last;
+
+        return sigma;
+    }
+};
+
+
 
 int main(int argc, char** argv){
     auto start = chrono::high_resolution_clock::now();
