@@ -49,7 +49,7 @@ solution construcao(Data& data, double alpha){
                 return a.distancia < b.distancia;
             });
 
-        int quantidadeRCL = (int)ceil(alpha * candidatos.size());
+        int quantidadeRCL = max(1, (int)ceil(alpha * candidatos.size()));
         
         for(int i = 0; i < quantidadeRCL; i++){
             RCL.push_back(candidatos[i]);
@@ -87,7 +87,6 @@ void updateAllSubseq(Data &data, solution &s, vector<vector<subsequence>> &subse
     int n = s.sequence.size();
 
     for(int i = 0; i < n; i++){
-        int v = s.sequence[i];
         subseq_matrix[i][i].W = (i > 0);
         subseq_matrix[i][i].C = 0;
         subseq_matrix[i][i].T = 0;
@@ -190,17 +189,14 @@ bool bestImprovementOrOpt(solution& s, Data& data, int l, vector<vector<subseque
     int best_i = 0, best_j = 0;
     int n = s.sequence.size();
 
-    for(int i = 1; i <= n - l - 1; i++){
+    for(int i = 1; i <= n - 2; i++){
         for(int j = 1; j <= n - l - 1; j++){
             subsequence aux1, aux2, newSolution;
             double delta;
+            
+            if(j == i) continue;
+            if(j < i && i <= j + l - 1) continue;
 
-            // Verifica sobreposição
-            if(j >= i && j <= i + l - 1) continue;
-            
-            // Pula movimentos sem efeito (adjacentes)
-            if(j == i - 1 || j == i + l) continue;
-            
             if(j > i){
                 aux1 = subsequence::concatenate(data, subseq_matrix[0][i - 1], subseq_matrix[j][j + l -1]);
                 aux2 = subsequence::concatenate(data, aux1, subseq_matrix[i][j - 1]);
@@ -225,17 +221,17 @@ bool bestImprovementOrOpt(solution& s, Data& data, int l, vector<vector<subseque
     if(bestDelta < 0){
         vector<int> bloco;
         for(int k = 0; k < l; k++){
-            bloco.push_back(s.sequence[best_i + k]);
+            bloco.push_back(s.sequence[best_j + k]);
         }
 
-        s.sequence.erase(s.sequence.begin() + best_i, s.sequence.begin() + best_i + l);
+        s.sequence.erase(s.sequence.begin() + best_j, s.sequence.begin() + best_j + l);
         
         int posInsercao;
-        if(best_j < best_i){
-            posInsercao = best_j;      // Inserir antes
+        if(best_j > best_i){
+            posInsercao = best_i;      // Inserir antes
         } 
         else {
-            posInsercao = best_j - l;  // Inserir depois
+            posInsercao = best_i - l + 1;  // Inserir depois
         }
         
         s.sequence.insert(s.sequence.begin() + posInsercao, bloco.begin(), bloco.end());
