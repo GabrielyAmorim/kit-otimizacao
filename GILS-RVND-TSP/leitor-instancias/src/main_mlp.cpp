@@ -18,8 +18,8 @@ solution construcao(Data& data, double alpha){
     vector<int> CL;
 
     struct Candidato{
-            int no;
-            double distancia;
+        int no;
+        double distancia;
     };
 
     vector<Candidato>candidatos;
@@ -106,6 +106,55 @@ void updateAllSubseq(Data &data, solution &s, vector<vector<subsequence>> &subse
     }
 }
 
+void updateSubseqSwap(Data &data, solution &s,  vector<vector<subsequence>> &subseq_matrix, int i, int j){
+    int n = s.sequence.size();
+
+    for(int k : {i, j}){
+        subseq_matrix[k][k].W = (k > 0);
+        subseq_matrix[k][k].C = 0;
+        subseq_matrix[k][k].T = 0;
+        subseq_matrix[k][k].first = s.sequence[k];
+        subseq_matrix[k][k].last = s.sequence[k];
+    }
+
+    for(int k = 0; k <= j; k++){
+        int firstCol;
+
+        if(k < i){
+            firstCol = i;
+        }
+        else if(k == i){
+            firstCol = i + 1;
+        }
+        else if(k < j){
+            firstCol = j;
+        }
+        else{
+            firstCol = j + 1;
+        }
+
+        for(int m = firstCol; m < n; m++){
+            subseq_matrix[k][m] = subsequence::concatenate(data, subseq_matrix[k][m - 1], subseq_matrix[m][m]);
+        }
+    }
+
+    for(int k = n - 1; k >= i; k--){
+        int lastCol;
+
+        if(k < j){
+            lastCol = min(k - 1, i);
+        }
+        else{
+            lastCol = min(k - 1, j);
+        }
+
+        for(int m = lastCol; m >= 0; m--){
+            subseq_matrix[k][m] = subsequence::concatenate(data, subseq_matrix[k][m + 1], subseq_matrix[m][m]);
+        }    
+    }
+
+}
+
 bool bestImprovementSwap(solution& s, Data& data, vector<vector<subsequence>> &subseq_matrix){
     double bestDelta = 0.0;
     int best_i = 0, best_j = 0;
@@ -138,16 +187,44 @@ bool bestImprovementSwap(solution& s, Data& data, vector<vector<subsequence>> &s
         }
     }
 
-     if(bestDelta < 0){
+    if(bestDelta < 0){
         swap(s.sequence[best_i], s.sequence[best_j]);
         s.cost += bestDelta;
 
-        updateAllSubseq(data, s, subseq_matrix);
+        updateSubseqSwap(data, s, subseq_matrix, best_i, best_j);
 
         return true;
     }
 
     return false;
+}
+
+void updateSubseq2Opt(Data &data, solution &s,  vector<vector<subsequence>> &subseq_matrix, int i, int j){
+    int n = s.sequence.size();
+
+    for(int k = i + 1; k <= j; k++){
+        subseq_matrix[k][k].W = (k > 0);
+        subseq_matrix[k][k].C = 0;
+        subseq_matrix[k][k].T = 0;
+        subseq_matrix[k][k].first = s.sequence[k];
+        subseq_matrix[k][k].last = s.sequence[k];
+    }
+
+    for(int k = 0; k <= j; k++){
+        int firstCol = max(k + 1, i + 1);
+
+        for(int m = firstCol; m < n; m++){
+            subseq_matrix[k][m] = subsequence::concatenate(data, subseq_matrix[k][m - 1], subseq_matrix[m][m]);
+        }
+    }
+
+    for(int k = n - 1; k >= i + 1; k--){
+        int lastCol = min(k - 1, j);
+
+        for(int m = lastCol; m >= 0; m--){
+            subseq_matrix[k][m] = subsequence::concatenate(data, subseq_matrix[k][m + 1], subseq_matrix[m][m]);
+        }    
+    }
 }
 
 bool bestImprovement2Opt(solution& s, Data& data, vector<vector<subsequence>> &subseq_matrix){
@@ -176,12 +253,50 @@ bool bestImprovement2Opt(solution& s, Data& data, vector<vector<subsequence>> &s
         reverse(s.sequence.begin() + best_i + 1, s.sequence.begin() + best_j + 1);
         s.cost += bestDelta;
 
-        updateAllSubseq(data, s, subseq_matrix);
+        updateSubseq2Opt(data, s, subseq_matrix, best_i, best_j);
         
         return true;
     }
 
     return false;
+}
+
+void updateSubseqOrOpt(Data &data, solution &s,  vector<vector<subsequence>> &subseq_matrix, int l, int i, int j){
+    int n = s.sequence.size();
+    int first, last; 
+
+    if(j > i){
+        first = i;
+        last = j + l - 1;
+    }
+    else{
+        first = j;
+        last = i;
+    }
+
+    for(int k = first; k <= last; k++){
+        subseq_matrix[k][k].W = (k > 0);
+        subseq_matrix[k][k].C = 0;
+        subseq_matrix[k][k].T = 0;
+        subseq_matrix[k][k].first = s.sequence[k];
+        subseq_matrix[k][k].last = s.sequence[k];
+    }
+
+    for(int k = 0; k <= last; k++){
+        int firstCol = max(k + 1, first);
+
+        for(int m = firstCol; m < n; m++){
+            subseq_matrix[k][m] = subsequence::concatenate(data, subseq_matrix[k][m - 1], subseq_matrix[m][m]);
+        }
+    }
+
+    for(int k = n - 1; k >= first; k--){
+        int lastCol = min(k - 1, last);
+
+        for(int m = lastCol; m >= 0; m--){
+            subseq_matrix[k][m] = subsequence::concatenate(data, subseq_matrix[k][m + 1], subseq_matrix[m][m]);
+        } 
+    }   
 }
 
 bool bestImprovementOrOpt(solution& s, Data& data, int l, vector<vector<subsequence>> &subseq_matrix){
@@ -237,7 +352,7 @@ bool bestImprovementOrOpt(solution& s, Data& data, int l, vector<vector<subseque
         s.sequence.insert(s.sequence.begin() + posInsercao, bloco.begin(), bloco.end());
         s.cost += bestDelta;
 
-        updateAllSubseq(data, s, subseq_matrix);
+        updateSubseqOrOpt(data, s, subseq_matrix, l, best_i, best_j);
 
         return true;
     }
@@ -289,7 +404,7 @@ solution perturbacao(solution best, Data& data){
     int maxPos1 = n - tamanho1 - tamanho2 - 3;
     int pos1 = 1 + rand() % maxPos1;
     
-    int minPos2 = pos1 + tamanho1 + 1;
+    int minPos2 = pos1 + tamanho1;
     int maxPos2 = n - tamanho2 - 1;
     int pos2 = minPos2 + rand() % (maxPos2 - minPos2 + 1);
     
@@ -319,8 +434,8 @@ solution ILS(int maxIter, int maxIterIls, Data& data){
         solution s = construcao(data, alpha);
             
         vector<vector<subsequence>> subseq_matrix(s.sequence.size(), vector<subsequence>(s.sequence.size()));
-
         updateAllSubseq(data, s, subseq_matrix);
+
         s.cost = subseq_matrix[0][s.sequence.size() - 1].C;
 
         solution best = s;
@@ -335,6 +450,7 @@ solution ILS(int maxIter, int maxIterIls, Data& data){
 
             s = perturbacao(best, data);
             updateAllSubseq(data, s, subseq_matrix);
+
             s.cost = subseq_matrix[0][s.sequence.size() - 1].C;
             
             iterIls++;
