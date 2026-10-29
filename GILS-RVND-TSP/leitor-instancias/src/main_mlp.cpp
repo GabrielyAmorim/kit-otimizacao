@@ -393,7 +393,37 @@ void buscaLocal(solution& s, Data& data, vector<vector<subsequence>> &subseq_mat
     }
 }
 
-solution perturbacao(solution best, Data& data){
+void updateSubseqPertubacao(Data &data, solution &s,  vector<vector<subsequence>> &subseq_matrix, int tam2, int pos1, int pos2){
+    int n = s.sequence.size();
+    int first = pos1;
+    int last = pos2 + tam2 - 1; 
+
+    for(int k = first; k <= last; k++){
+        subseq_matrix[k][k].W = (k > 0);
+        subseq_matrix[k][k].C = 0;
+        subseq_matrix[k][k].T = 0;
+        subseq_matrix[k][k].first = s.sequence[k];
+        subseq_matrix[k][k].last = s.sequence[k];
+    }
+
+    for(int k = 0; k <= last; k++){
+        int firstCol = max(k + 1, first);
+
+        for(int m = firstCol; m < n; m++){
+            subseq_matrix[k][m] = subsequence::concatenate(data, subseq_matrix[k][m - 1], subseq_matrix[m][m]);
+        }
+    }
+
+    for(int k = n - 1; k >= first; k--){
+        int lastCol = min(k - 1, last);
+
+        for(int m = lastCol; m >= 0; m--){
+            subseq_matrix[k][m] = subsequence::concatenate(data, subseq_matrix[k][m + 1], subseq_matrix[m][m]);
+        } 
+    }   
+}
+
+solution perturbacao(solution best, Data& data, vector<vector<subsequence>> &subseq_matrix){
     solution copia = best;
     int n = copia.sequence.size() - 1;
     
@@ -420,6 +450,10 @@ solution perturbacao(solution best, Data& data){
     
     copia.sequence = novaSequencia;
 
+    updateSubseqPertubacao(data, copia, subseq_matrix, tamanho2, pos1, pos2);
+
+    copia.cost = subseq_matrix[0][copia.sequence.size() - 1].C;
+
     return copia;
 }
 
@@ -432,26 +466,26 @@ solution ILS(int maxIter, int maxIterIls, Data& data){
 
         double alpha = (double)rand() / RAND_MAX;
         solution s = construcao(data, alpha);
-            
+        
         vector<vector<subsequence>> subseq_matrix(s.sequence.size(), vector<subsequence>(s.sequence.size()));
         updateAllSubseq(data, s, subseq_matrix);
 
         s.cost = subseq_matrix[0][s.sequence.size() - 1].C;
 
         solution best = s;
+        vector<vector<subsequence>> best_subseq_matrix = subseq_matrix;
 
         while(iterIls < maxIterIls){
             buscaLocal(s, data, subseq_matrix);
             
             if(s.cost < best.cost){
                 best = s;
+                best_subseq_matrix = subseq_matrix;
                 iterIls = 0;
             }
 
-            s = perturbacao(best, data);
-            updateAllSubseq(data, s, subseq_matrix);
-
-            s.cost = subseq_matrix[0][s.sequence.size() - 1].C;
+            subseq_matrix = best_subseq_matrix;
+            s = perturbacao(best, data, subseq_matrix);
             
             iterIls++;
         }
